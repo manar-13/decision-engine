@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Decision Engine — Live Demo</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --border: #334155;
+            --execute: #22c55e;
+            --ask: #eab308;
+            --defer: #64748b;
+            --escalate: #f97316;
+            --refuse: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 32px 16px 80px;
+        }
+
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 0;
+            margin-bottom: 32px;
+        }
+
+        .domain-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .domain-card h2 {
+            margin: 0 0 4px;
+            font-size: 1.1rem;
+        }
+
+        .domain-card p.question {
+            color: var(--muted);
+            margin: 0 0 14px;
+            font-size: 0.9rem;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        button.scenario {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        button.scenario:hover {
+            border-color: #64748b;
+        }
+
+        #result {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 8px;
+            margin-bottom: 24px;
+            min-height: 60px;
+        }
+
+        .placeholder {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color: #0f172a;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+
+        .bar-track {
+            flex: 1;
+            background: #0f172a;
+            border-radius: 6px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+        }
+
+        ul {
+            margin: 6px 0;
+            padding-left: 20px;
+            font-size: 0.88rem;
+        }
+
+        .reasoning {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            color: var(--text);
+        }
+
+        #audit-list {
+            font-size: 0.85rem;
+        }
+
+        .audit-entry {
+            border-bottom: 1px solid var(--border);
+            padding: 8px 0;
+        }
+
+        .audit-entry:last-child {
+            border-bottom: none;
+        }
+
+        .audit-outcome {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-right: 8px;
+        }
+
+        .refresh-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>🧭 Decision Engine</h1>
+        <p class="subtitle">A decision layer that decides whether an AI system is allowed to act — based on confidence,
+            risk, evidence, and reversibility. Click any scenario below to see it decide in real time.</p>
+
+        <div class="domain-card">
+            <h2>💸 Refund Approval</h2>
+            <p class="question">Should this refund be approved automatically?</p>
+            <div class="buttons">
+                <button class="scenario"
+                    onclick='run("/api/refund", {orderId:"R-1001",amount:15,customerTenureDays:100,priorRefunds:0,reasonProvided:true,reasonMatchesPolicy:true})'>Small
+                    refund, valid reason</button>
+                <button class="scenario"
+                    onclick='run("/api/refund", {orderId:"R-1002",amount:40,customerTenureDays:2,priorRefunds:0,reasonProvided:false,reasonMatchesPolicy:false})'>New
+                    customer, no reason given</button>
+                <button class="scenario"
+                    onclick='run("/api/refund", {orderId:"R-1003",amount:250,customerTenureDays:100,priorRefunds:4,reasonProvided:false,reasonMatchesPolicy:false})'>Large
+                    refund, repeat refunder, no reason</button>
+            </div>
+        </div>
+
+        <div class="domain-card">
+            <h2>🎫 Support Ticket Triage</h2>
+            <p class="question">Can this ticket be auto-handled, or does it need a human?</p>
+            <div class="buttons">
+                <button class="scenario"
+                    onclick='run("/api/ticket", {ticketId:"T-1",text:"I need to reset my password please",customerTier:"free",sentimentScore:0.2,priorTicketsThisWeek:0})'>Routine
+                    password reset</button>
+                <button class="scenario"
+                    onclick='run("/api/ticket", {ticketId:"T-2",text:"My account seems weird and something isn'"'"'t working right",customerTier:"free",sentimentScore:-0.1,priorTicketsThisWeek:1})'>Vague
+                    issue, unclear category</button>
+                <button class="scenario"
+                    onclick='run("/api/ticket", {ticketId:"T-3",text:"We are experiencing a major outage affecting our production systems",customerTier:"enterprise",sentimentScore:-0.6,priorTicketsThisWeek:1})'>Enterprise
+                    outage report</button>
+            </div>
+        </div>
+
+        <div class="domain-card">
+            <h2>🛡️ Content Moderation</h2>
+            <p class="question">Should this reported post be removed?</p>
+            <div class="buttons">
+                <button class="scenario"
+                    onclick='run("/api/moderation", {postId:"P-1",text:"example text",reportCount:8,authorTrustScore:0.1,containsFlaggedTerms:false,isRepeatOffender:true})'>Repeat
+                    offender, many reports</button>
+                <button class="scenario"
+                    onclick='run("/api/moderation", {postId:"P-2",text:"example text",reportCount:2,authorTrustScore:0.9,containsFlaggedTerms:false,isRepeatOffender:false})'>Few
+                    reports, trusted account</button>
+                <button class="scenario"
+                    onclick='run("/api/moderation", {postId:"P-3",text:"example flagged text",reportCount:6,authorTrustScore:0.5,containsFlaggedTerms:true,isRepeatOffender:false})'>Flagged
+                    content, several reports</button>
+            </div>
+        </div>
+
+        <div id="result">
+            <p class="placeholder">Click a scenario above to see the engine's decision here.</p>
+        </div>
+
+        <h2>📜 Audit Trail</h2>
+        <button class="refresh-btn" onclick="loadAudit()">Refresh audit trail</button>
+        <div id="audit-list">
+            <p class="placeholder">No decisions logged yet.</p>
+        </div>
+    </div>
+
+    <script>
+        const OUTCOME_COLORS = {
+            execute: "var(--execute)",
+            ask: "var(--ask)",
+            defer: "var(--defer)",
+            escalate: "var(--escalate)",
+            refuse: "var(--refuse)",
+        };
+
+        async function run(endpoint, payload) {
+            const resultEl = document.getElementById("result");
+            resultEl.innerHTML = '<p class="placeholder">Thinking...</p>';
+            try {
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                renderResult(data);
+                loadAudit();
+            } catch (err) {
+                resultEl.innerHTML = '<p class="placeholder">Something went wrong calling the engine.</p>';
+            }
+        }
+
+        function renderResult(d) {
+            const color = OUTCOME_COLORS[d.outcome] || "#94a3b8";
+            const evidence = (d.evidence || []).map(e => `<li>${e}</li>`).join("") || "<li>None</li>";
+            const missing = (d.missingInfo || []).map(m => `<li>${m}</li>`).join("") || "<li>None</li>";
+
+            document.getElementById("result").innerHTML = `
+      <span class="badge" style="background:${color}">${d.outcome}</span>
+      <div class="bar-row">
+        <span style="width:90px">Confidence</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.confidence * 100).toFixed(0)}%; background:#38bdf8"></div></div>
+        <span>${(d.confidence * 100).toFixed(0)}%</span>
+      </div>
+      <div class="bar-row">
+        <span style="width:90px">Risk</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.risk * 100).toFixed(0)}%; background:#f97316"></div></div>
+        <span>${(d.risk * 100).toFixed(0)}%</span>
+      </div>
+      <p style="font-size:0.85rem; color:var(--muted)">Reversible: <strong style="color:var(--text)">${d.reversible ? "Yes" : "No"}</strong></p>
+      <p style="font-size:0.85rem; margin-bottom:2px">Evidence:</p>
+      <ul>${evidence}</ul>
+      <p style="font-size:0.85rem; margin-bottom:2px">Missing information:</p>
+      <ul>${missing}</ul>
+      <div class="reasoning"><strong>Reasoning:</strong> ${d.reasoning}</div>
+    `;
+        }
+
+        async function loadAudit() {
+            const listEl = document.getElementById("audit-list");
+            try {
+                const res = await fetch("/api/audit");
+                const entries = await res.json();
+                if (!entries.length) {
+                    listEl.innerHTML = '<p class="placeholder">No decisions logged yet.</p>';
+                    return;
+                }
+                listEl.innerHTML = entries.slice(0, 15).map(e => `
+        <div class="audit-entry">
+          <span class="audit-outcome" style="color:${OUTCOME_COLORS[e.decision.outcome] || '#94a3b8'}">${e.decision.outcome}</span>
+          ${e.description}
+          <div style="color:var(--muted); font-size:0.75rem">${new Date(e.timestamp).toLocaleString()}</div>
+        </div>
+      `).join("");
+            } catch (err) {
+                listEl.innerHTML = '<p class="placeholder">Could not load audit trail.</p>';
+            }
+        }
+
+        loadAudit();
+    </script>
+</body>
+
+</html>
