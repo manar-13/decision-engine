@@ -1,0 +1,9 @@
+# Where decision layers go next (a two-year thesis)
+
+Most of the current conversation around AI agents focuses on making each individual decision smarter — better confidence estimates, better risk models, better prompts. I think that's the wrong fight for the next two years. The real problem is what my own failure test exposed: a decision layer that judges every action in perfect isolation is trivially defeated by anyone who breaks one risky action into several small, individually-safe ones. As more of these systems get deployed, that gap stops being a curiosity and becomes the standard attack surface — the AI equivalent of transaction structuring, except now it can be done at machine speed, by accident or on purpose, across dozens of agents that never talk to each other.
+
+So my bet is this: within two years, "decision layer" will stop meaning "a smart single-call filter" and start meaning "a system with memory of its own recent decisions, shared across every agent touching the same resource." The winners won't be whoever has the best per-call risk score — they'll be whoever can detect that five separate agents, each individually acting reasonably, are collectively doing something no single one of them was ever approved to do.
+
+The second, related shift: audit trails move from a nice-to-have log to a regulatory requirement with teeth — externally verifiable, tamper-evident, and queryable by someone other than the company that built the system. Right now my own audit log is just an honest list in memory. In two years, I expect "can you prove, to someone who doesn't trust you, that this decision was made the way you say it was" to be a real compliance question, not a feature request.
+
+The common thread: the hard part was never the decision. It's the memory around it.
